@@ -28,7 +28,7 @@ spring:
           uri: ${GITHUB_URL}
           clone-on-start: true
           default-label: ${GITHUB_BRANCH}
-          search-paths: 'app/profile/{application}/local'
+          search-paths: 'profiles/{application}/local'
 encrypt:
   key: ${CONFIG_SERVER_ENCRYPT_KEY}
 server:
@@ -63,7 +63,7 @@ spring:
           uri: ${GITHUB_URL}
           clone-on-start: true
           default-label: ${GITHUB_BRANCH}
-          search-paths: 'app/profile/{application}/dsv'
+          search-paths: 'profiles/{application}/dsv'
 encrypt:
   key: ${CONFIG_SERVER_ENCRYPT_KEY}
 server:
