@@ -1,14 +1,20 @@
-name: Pipeline Build
+name: Pipeline Conf Service
 on:
   pull_request:
     paths:
       - 'app/**'
-      - '.github/workflows/**'
+      - '.github/workflows/conf-service.yml'   
     branches:
       - 'main'
       - 'develop'
       - 'hotfix/**'
       - 'release/**'
+  push:
+    paths:
+      - 'app/**'
+      - '.github/workflows/conf-service.yml'  
+    branches:
+      - 'main'    
   workflow_dispatch:
 env:
   BRANCH_TARGET: ${{ github.ref_name }}
@@ -18,49 +24,29 @@ env:
   REGISTRY_DOCKER: ghcr.io
   REPOSITORY_DOCKER: ${{ github.repository }}
   VERSION_TYPE: ''
-  APP: config-server-service
+  APP: conf-service
   
 jobs:
   info-environment:
     name: Identifying the Environment
     permissions: write-all
-    uses: ./.github/workflows/identifier.yml
+    uses: brazona/github-actions-share/.github/workflows/identifier.yml@main
     with:
       github_base_ref: ${{github.base_ref}}
       github_event_name: ${{github.event_name }}
       github_ref_name: ${{github.ref_name}}
-      pr_merged: ${{github.event.pull_request.merged}}
+      app_name: conf-service
   generate-tag:
     name: Generate Tag Image Docker
     permissions: write-all
     needs: [info-environment]
-    uses: ./.github/workflows/tag.yml
+    uses: brazona/github-actions-share/.github/workflows/tag.yml@main
     with:
       environment_name: ${{needs.info-environment.outputs.environment_name}}
       path_pom: ./app/pom.xml
-  java:
-    name: Maven Build
-    needs: [info-environment]
-    permissions: write-all
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{needs.info-environment.outputs.environment_name}}
-    steps:
-    - name: Checkout the source code
-      uses: actions/checkout@v3
-
-    - name: Set up JDK 21
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'adopt'
-        java-version: '21'
-        cache: maven
-
-    - name: Build with Maven
-      run: mvn -B package --file app/pom.xml
   build:
     name: Build and Push Docker image 
-    needs: [info-environment, generate-tag, java]
+    needs: [info-environment, generate-tag]
     runs-on: ubuntu-latest
     permissions: write-all
     environment:
@@ -69,8 +55,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Cache Maven packages
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
+          save-always: true
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
@@ -82,8 +69,7 @@ jobs:
           distribution: 'adopt'
           java-version: '21'
       - name: Build with Maven
-        #run: mvn -f ./app/ clean install 
-        run: mvn -f ./app/ clean install -P ${{needs.info-environment.outputs.maven_profile}}
+        run: mvn -f ./app/ clean install -P build
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
@@ -96,20 +82,20 @@ jobs:
         env:
           TAG_IMAGE: ${{needs.generate-tag.outputs.tag}}
         with:
-          context: ./app
+          context: ./app/service
           push: true
           tags: ${{ env.REGISTRY_DOCKER }}/${{ github.repository }}/${{ env.APP }}:${{env.TAG_IMAGE}}
   deploy:
     name: Pipeline Deploy
-    needs: [info-environment, generate-tag, build]
+    needs: [build, generate-tag, info-environment]
     permissions: write-all
-    uses: ./.github/workflows/deploy.yml
+    uses: brazona/github-actions-share/.github/workflows/pipeline-deploy.yml@main
     secrets:
       KUBECONFIG: ${{ secrets.KUBECONFIG }}
     with:
       environment_name: ${{needs.info-environment.outputs.environment_name}}
       name_env: ${{needs.info-environment.outputs.github_env_file_field}}
       path_app: app
-      docker_image_tag: ${{needs.generate-tag.outputs.tag}}
-
+      docker_image_tag: ${{needs.generate-tag.outputs.tag}}  
+          
 
