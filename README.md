@@ -1,6 +1,17 @@
-# Support Server
+# Config Server Service
 
-Servidores que tem o objetivo que oferecer suporte as aplicações, desde monitoramento de dados, desempenho de recursos computacionais, até persistência de dados.
+Esse aplicativo tem a função de centralizar o fornecimento de informações de configuração das aplicações, possibilitando classificar os arquivos em perfils, assim entregando as configurações especifica de cada ambiente.
+
+## Versões
+
+__[relação das versões de aplicativos externos: ]__ A aplicação utiliza as seguintes versões:
+
+| Software | Versão |
+| --- | --- |
+| JDK | 21.0.2 |
+| Maven | 3.9.3 |
+| Docker | 27.5.1|
+| Docker Compose | 2.32.4|
 
 ## Estrutura do projeto
 
@@ -9,18 +20,13 @@ Servidores que tem o objetivo que oferecer suporte as aplicações, desde monito
 ├── .github
 │   └── workflows
 │       └── script
-│           └── manifest.sh
-│       └── postgres.yml
-│       └── grafana.yml
-│       └── deploy.yml
+│               └── manifest.sh
+│           └── conf-service.yml
+│           └── ng-update.yml
+│           └── rules.yml
+│       └── dependabot.yml
 ├── app
-│   └── grafana
-│       └── local
-│           └── compose.yaml
-│       └── deployment.yaml
-│   └── zipkin
-│   └── postgres
-│   └── grafana
+│   └── src
 ├── docs
 │   └── CONTRIBUTING.md
 │   └── CODE_OF_CONDUCT.md
@@ -43,21 +49,21 @@ As alterações são aplicadas em determinado ambiente através das **branchs**,
 | pre-release/** | Aplica no ambiente __STG__ |
 | main | Aplica no ambiente __PRD__ |
 
-## Deploy com docker compose
+## Sobre a Aplicação
+
+Esta aplicação foi desenvolvida utilizando a linguaguem [java](https://www.java.com/pt-BR/) e o framework [spring Boot](https://docs.spring.io/spring-boot/index.html)
+
+## Build com docker compose
 
 Para atender a necessidade de executar a os servidore em ambiente local, foi criado um manifesto compose que inicia as configurações iniciais dos servidores, proporcionando os recursos da arquitetura em ambiente **localhost.**
 
 Para executar essa instrução basta abrir o terminal shell, e executar com exemplo abaixo:
 
-```sh
-bash app/launch_app.sh grafana-prometheus keycloak postgres
+``` sh
+cd app &&
+mvn clean install &&
+docker compose --env-file .env up -d --build --force-recreate
 ```
-
-Informando ao argumento do arquivo shell, os nomes dos servidores que deseja executar.
-
-> [!NOTE]
-> Para executar o comando acima citado, é necessário incluir no diretório **app/**, o arquivo .env, que fornecerá ao docker compose as variáveis de ambiente.
-> Procure o arquiteto do projeto e solicite o arquivo **.env**.
 
 ## Licença
 
