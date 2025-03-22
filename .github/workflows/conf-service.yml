@@ -82,7 +82,7 @@ jobs:
         env:
           TAG_IMAGE: ${{needs.generate-tag.outputs.tag}}
         with:
-          context: ./app/service
+          context: ./app
           push: true
           tags: ${{ env.REGISTRY_DOCKER }}/${{ github.repository }}/${{ env.APP }}:${{env.TAG_IMAGE}}
   deploy:
